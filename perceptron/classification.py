@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # загрузка credit_data и разделение на Х и у
 data = pd.read_csv('credit_data')
@@ -73,14 +74,14 @@ num_pipeline = Pipeline([
     ('scaler', StandardScaler())
 ])
 
-categorical_pipelines = Pipeline([
+categorical_pipeline = Pipeline([
     ('imputer', SimpleImputer(strategy='most_frequent')),
     ('encoder', OneHotEncoder(handle_unknown='ignore'))
 ]) #
 
 preprocessor = ColumnTransformer([
     ('num', num_pipeline, num_columns),
-    ('cat', categorical_pipelines, categorical_columns)
+    ('cat', categorical_pipeline, categorical_columns)
 ])
 
 pipeline = Pipeline([
@@ -103,13 +104,19 @@ plt.ylabel('Количество ошибок')
 plt.grid(True)
 plt.show()
 
-# оценка качества
-train_accuracy = pipeline.score(X_train, y_train)
-test_accuracy = pipeline.score(X_test, y_test)
+y_pred = pipeline.predict(X_test)
 
-# отображение точности
-print(f"Точность на обучающей выборке: {train_accuracy:.2%}")
-print(f"Точность на тестовой выборке: {test_accuracy:.2%}")
+# оценка качества
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='binary', pos_label=1)
+recall = recall_score(y_test, y_pred, average='binary', pos_label=1)
+f1 = f1_score(y_test, y_pred, average='binary', pos_label=1)
+
+print("Оценка качества:")
+print(f"Точность: {accuracy:.2%}")
+print(f"Точность положительных прогнозов: {precision:.2%}")
+print(f"Полнота: {recall:.2%}")
+print(f"F1-Score: {f1:.2%}")
 
 # отображение весов модели
 print(f"\nВеса модели: {pipeline.named_steps['model'].w}")
