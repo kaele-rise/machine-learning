@@ -19,11 +19,12 @@ y = np.where(y == 1, 1, -1)
 
 # модель классификации (перцептрон)
 class Perceptron(BaseEstimator, ClassifierMixin):
-    def __init__(self, learning_rate = 0.01, max_iter = 1000, seed = 42):
+    def __init__(self, learning_rate = 0.01, max_iter = 1000, seed = 42, l2_lm = 0.1):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.errors = []
         self.seed = seed
+        self.l2_lm = l2_lm
 
     def fit(self, X, y):
         np.random.seed(self.seed)
@@ -34,7 +35,7 @@ class Perceptron(BaseEstimator, ClassifierMixin):
         # инициализация весов
         self.w = np.random.normal(0, 0.01, X_bias.shape[1])
 
-        batch_size = 20
+        batch_size = 50
 
         n_samples = X_bias.shape[0]
 
@@ -50,9 +51,14 @@ class Perceptron(BaseEstimator, ClassifierMixin):
 
             error = y_batch - prediction
 
-            grad = np.dot(x_batch.T, error)
+            grad = np.dot(x_batch.T, error) / batch_size
 
-            self.w += self.learning_rate * grad
+            grad_regulariztion = self.l2_lm * self.w
+            grad_regulariztion[0] = 0
+
+            total_grad = grad - grad_regulariztion
+
+            self.w += self.learning_rate * total_grad
 
             total_error = np.sum(np.sign(prediction) != y_batch)
 
