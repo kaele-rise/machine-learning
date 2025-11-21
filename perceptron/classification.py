@@ -34,20 +34,27 @@ class Perceptron(BaseEstimator, ClassifierMixin):
         # инициализация весов
         self.w = np.random.normal(0, 0.01, X_bias.shape[1])
 
+        batch_size = 20
+
+        n_samples = X_bias.shape[0]
+
 
         for n in range(self.max_iter):
             total_error = 0
-            indices = np.random.permutation(X_bias.shape[0]) # перемешивание данных
 
-            for i in range(X.shape[0]):
-                prediction = np.sign(np.dot(self.w, X_bias[i])) # предсказание
-                error = y[i] * prediction # проверка ошибки (если знаки различны - error принимает значение < 0)
+            k = np.random.randint(0, n_samples - batch_size)
+            x_batch = X_bias[k:(k + batch_size)]
+            y_batch = y[k:(k + batch_size)]
 
-                if error < 0:
-                    self.w += self.learning_rate * y[i] * X_bias[i] # корректировка весов
-                    total_error += 1
+            prediction = np.dot(x_batch, self.w)
 
-            self.errors.append(total_error)
+            error = y_batch - prediction
+
+            grad = np.dot(x_batch.T, error)
+
+            self.w += self.learning_rate * grad
+
+            total_error = np.sum(np.sign(prediction) != y_batch)
 
             if total_error == 0: # условие раннего выхода
                 print(f'Обучение завершено на эпохе {n}')
