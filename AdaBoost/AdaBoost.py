@@ -43,7 +43,7 @@ for n in range(1, T):
 y_test = np.sign(y_test)
 test_len = len(y_test)
 y_test[y_test == -1] = 0
-submission = pd.DataFrame({'id': [i for i in range(test_len)],
+submission = pd.DataFrame({'id': [i for i in range(2190, 2190 + test_len)],
                        'rainfall': y_test})
 
 submission.to_csv('data.csv', index=False, encoding='utf-8')
