@@ -11,7 +11,7 @@ y_train = np.array(train_data['Tm']).T
 x_test = np.array(test_data.drop(['id', 'SMILES'], axis=1))
 
 
-T = 12
+T = 30
 max_depth = 3
 algs = []
 s = np.array(y_train.ravel())
@@ -25,6 +25,8 @@ for t in range(T):
 y_test = algs[0].predict(x_test)
 for i in range(1, T):
     y_test += algs[i].predict(x_test)
+
+Qt = np.mean(s ** 2)
 
 prediction = pd.DataFrame({'id': np.array(test_data['id']),
                            'Tm': y_test})
