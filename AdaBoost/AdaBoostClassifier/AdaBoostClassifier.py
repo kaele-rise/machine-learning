@@ -5,7 +5,7 @@ import pandas as pd
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 
-feature_cols = ['day', 'pressure', 'maxtemp', 'temparature', 'mintemp',
+feature_cols = ['pressure', 'maxtemp', 'temparature', 'mintemp',
                'dewpoint', 'humidity', 'cloud', 'sunshine', 'winddirection',
                'windspeed']
 
