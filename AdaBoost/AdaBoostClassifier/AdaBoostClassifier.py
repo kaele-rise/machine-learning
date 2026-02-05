@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
@@ -9,8 +10,13 @@ feature_cols = ['pressure', 'maxtemp', 'temparature', 'mintemp',
                'dewpoint', 'humidity', 'cloud', 'sunshine', 'winddirection',
                'windspeed']
 
+
 x_train = train_data[feature_cols].fillna(train_data[feature_cols].mean())
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+
 x_test = test_data[feature_cols].fillna(train_data[feature_cols].mean())
+x_test = scaler.transform(x_test)
 
 y_train = train_data['rainfall']
 x_train, y_train, x_test = np.array(x_train), np.array(y_train), np.array(x_test)

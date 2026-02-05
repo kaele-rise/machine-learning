@@ -1,14 +1,20 @@
 import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.preprocessing import StandardScaler
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 
+scaler = StandardScaler()
 x_train = np.array(train_data.drop(['id', 'SMILES', 'Tm'], axis=1))
+scaler.fit(x_train)
+x_train = scaler.transform(x_train)
+
 y_train = np.array(train_data['Tm']).T
 
 x_test = np.array(test_data.drop(['id', 'SMILES'], axis=1))
+x_test = scaler.transform(x_test)
 
 
 T = 30
