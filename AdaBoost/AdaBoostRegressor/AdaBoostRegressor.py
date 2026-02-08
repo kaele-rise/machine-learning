@@ -1,38 +1,51 @@
 import numpy as np
 import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import StandardScaler
+
+
+class AdaBoostRegressor:
+    def __init__(self, max_depth=3, iter=30):
+        self.max_depth = max_depth
+        self.iter = iter
+        self.algs = []
+
+    def fit(self, x, y):
+        s = np.array(y.ravel())
+
+        for t in range(self.iter):
+            self.algs.append(DecisionTreeRegressor(max_depth=self.max_depth))
+            self.algs[t].fit(x, s)
+            s -= self.algs[t].predict(x)
+
+        return self
+
+    def predict(self, x):
+        self.y_test = self.algs[0].predict(x)
+        for i in range(1, self.iter):
+            self.y_test += self.algs[i].predict(x)
+
+        return self.y_test
+
+
+pipeline = Pipeline([
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('scaler', StandardScaler()),
+    ('model', AdaBoostRegressor())
+])
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 
-scaler = StandardScaler()
 x_train = np.array(train_data.drop(['id', 'SMILES', 'Tm'], axis=1))
-scaler.fit(x_train)
-x_train = scaler.transform(x_train)
-
 y_train = np.array(train_data['Tm']).T
-
 x_test = np.array(test_data.drop(['id', 'SMILES'], axis=1))
-x_test = scaler.transform(x_test)
 
 
-T = 30
-max_depth = 3
-algs = []
-s = np.array(y_train.ravel())
-
-for t in range(T):
-    algs.append(DecisionTreeRegressor(max_depth=max_depth))
-    algs[t].fit(x_train, s)
-    s -= algs[t].predict(x_train)
-
-
-y_test = algs[0].predict(x_test)
-for i in range(1, T):
-    y_test += algs[i].predict(x_test)
-
-Qt = np.mean(s ** 2)
+pipeline.fit(x_train, y_train)
+y_test = pipeline.predict(x_test)
 
 prediction = pd.DataFrame({'id': np.array(test_data['id']),
                            'Tm': y_test})
