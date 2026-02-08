@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
@@ -23,28 +24,38 @@ x_train, y_train, x_test = np.array(x_train), np.array(y_train), np.array(x_test
 
 y_train[y_train == 0] = -1
 
+class AdaBoostClassifier:
+    def __init__(self, max_depth=3, iter=10):
+        self.max_depth = max_depth
+        self.iter = iter
+        self.algs = []
+        self.alpha = []
 
-max_depth = 3
-w = np.ones(len(x_train)) / len(x_train) #
-T = 10
+    def fit(self, x, y):
+        self.w = np.ones(len(x_train)) / len(x_train)  #
 
-algs = []
-alfa = []
+        for t in range(self.iter):
+            self.algs.append(DecisionTreeClassifier(criterion='gini', max_depth=self.max_depth))
+            self.algs[t].fit(x, y)
+            self.prediction = self.algs[t].predict(x)
+            self.N = np.sum((y != self.prediction) * self.w) + 1e-8
 
-for t in range(T):
-    algs.append(DecisionTreeClassifier(criterion='gini', max_depth=max_depth))
-    algs[t].fit(x_train, y_train)
-    predict = algs[t].predict(x_train)
-    N = np.sum((y_train != predict) * w) + 1e-8
+            self.alpha.append(0.5 * np.log((1 - self.N) / self.N))
+            self.w *= np.exp(-1 * self.alpha[t] * y * self.prediction)
+            self.w /= np.sum(self.w)
 
-    alfa.append(0.5 * np.log((1 - N) / N))
-    w *= np.exp(-1 * alfa[t] * y_train * predict)
-    w /= np.sum(w)
+        return self
 
+    def predict(self, x):
+        self.y_test = self.alpha[0] * self.algs[0].predict(x)
+        for n in range(1, self.iter):
+            self.y_test += self.alpha[n] * self.algs[n].predict(x)
 
-y_test = alfa[0] * algs[0].predict(x_test)
-for n in range(1, T):
-    y_test += alfa[n] * algs[n].predict(x_test)
+        return self.y_test
+
+classifier = AdaBoostClassifier()
+classifier.fit(x_train, y_train)
+y_test = classifier.predict(x_test)
 
 y_test = np.sign(y_test)
 test_len = len(y_test)
