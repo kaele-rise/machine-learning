@@ -91,18 +91,18 @@ for name, model in models.items():
 print(metrics)
 
 
-# prediction_pipeline = Pipeline([
-#     ('preprocessor', preprocessor),
-#     ('model', Ridge(alpha=1.0))
-# ])
-# prediction_pipeline.fit(x_train, y_train)
-# y_pred = prediction_pipeline.predict(x_test)
-#
-# prediction = pd.DataFrame({
-#     'Id': [i for i in range(len(y_pred))],
-#     'Churn': y_pred
-# })
-# prediction.to_csv('prediction.csv', index=False, encoding='utf-8')
+prediction_pipeline = Pipeline([
+    ('preprocessor', preprocessor),
+    ('model', LogisticRegression())
+])
+prediction_pipeline.fit(x_train, y_train)
+y_pred = prediction_pipeline.predict(x_test)
+
+prediction = pd.DataFrame({
+    'Id': [i for i in range(len(y_pred))],
+    'Churn': y_pred
+})
+prediction.to_csv('prediction.csv', index=False, encoding='utf-8')
 
 
 
