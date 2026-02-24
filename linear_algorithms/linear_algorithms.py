@@ -104,7 +104,38 @@ prediction = pd.DataFrame({
 })
 prediction.to_csv('prediction.csv', index=False, encoding='utf-8')
 
+plt_models = list(models.keys())
+plt_auc = [metrics[m]['AUC-ROC'] for m in plt_models]
+plt_f1 = [metrics[m]['F1'] for m in plt_models]
+print(plt_auc)
 
+x = np.arange(len(models))
+width = 0.35
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+bars1 = ax.bar(x - width/2, plt_auc, width, label='AUC-ROC', color='steelblue')
+bars2 = ax.bar(x + width/2, plt_f1, width, label='F1', color='coral')
+ax.set_xlabel('Модели')
+ax.set_ylabel('Значение метрики')
+ax.set_title('Сравнение AUC-ROC и F1 для различных моделей')
+ax.set_xticks(x)
+ax.set_xticklabels(models, rotation=15, ha='right')
+ax.legend()
+
+def add_labels(bars):
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.3f}',
+                    xy=(bar.get_x() + bar.get_width()/2, height),
+                    xytext=(0, 3),
+                    textcoords="offset points",
+                    ha='center', va='bottom')
+
+add_labels(bars1)
+add_labels(bars2)
+plt.tight_layout()
+plt.show()
 
 
 
