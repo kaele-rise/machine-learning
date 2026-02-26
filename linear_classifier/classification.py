@@ -17,8 +17,8 @@ y = data['Approved']
 y = np.where(y == 1, 1, -1)
 
 
-# модель классификации (перцептрон)
-class Perceptron(BaseEstimator, ClassifierMixin):
+# модель классификации
+class Classifier(BaseEstimator, ClassifierMixin):
     def __init__(self, learning_rate = 0.01, max_iter = 1000, seed = 42, l2_lm = 0.1):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -99,7 +99,7 @@ preprocessor = ColumnTransformer([
 
 pipeline = Pipeline([
     ('preprocessor', preprocessor),
-    ('model', Perceptron(learning_rate=0.01, max_iter=1000))
+    ('model', Classifier(learning_rate=0.01, max_iter=1000))
 ])
 
 # разбиение выборки на обучающую и тестовую
