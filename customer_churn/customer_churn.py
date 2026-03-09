@@ -1,10 +1,10 @@
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import RidgeClassifier, LogisticRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.ensemble import VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -42,10 +42,10 @@ preprocessor = ColumnTransformer([
 
 pipeline = Pipeline([
     ('preprocessor', preprocessor),
-    ('voting_model', VotingClassifier(estimators=[('log_regr', LogisticRegression(class_weight='balanced', max_iter=1000)),
-                                                  ('d_tree', DecisionTreeClassifier(max_depth=5, class_weight='balanced')),
-                                                  ('svm', SVC(probability=True, random_state=42)),
-                                                  ('knn', KNeighborsClassifier(n_neighbors=5))]))
+    ('voting_model', VotingClassifier(estimators=[('log_regr', LogisticRegression(class_weight='balanced', max_iter=500)),
+                                                  ('d_tree', DecisionTreeClassifier(max_depth=4, class_weight='balanced')),
+                                                  ('svm', SVC(kernel='linear', probability=True, random_state=42)),
+                                                  ('knn', KNeighborsClassifier(n_neighbors=5))], n_jobs=-1))
 ])
 
 pipeline.fit(x_train, y_train)
