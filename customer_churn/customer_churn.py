@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.ensemble import VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
+from tqdm import tqdm
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
@@ -40,17 +41,24 @@ preprocessor = ColumnTransformer([
     ('num', num_pipeline, num_columns)
 ])
 
-pipeline = Pipeline([
-    ('preprocessor', preprocessor),
-    ('voting_model', VotingClassifier(estimators=[('log_regr', LogisticRegression(class_weight='balanced', max_iter=500)),
-                                                  ('d_tree', DecisionTreeClassifier(max_depth=4, class_weight='balanced')),
-                                                  ('svm', SVC(kernel='linear', probability=True, random_state=42)),
-                                                  ('knn', KNeighborsClassifier(n_neighbors=5))], n_jobs=-1))
-])
+x_train_processed = preprocessor.fit_transform(x_train)
+x_test_processed = preprocessor.transform(x_test)
 
-pipeline.fit(x_train, y_train)
+estimators = [
+    ('log_regr', LogisticRegression(class_weight='balanced', max_iter=500)),
+    ('d_tree', DecisionTreeClassifier(max_depth=4, class_weight='balanced')),
+    ('svm', SVC(kernel='linear', random_state=42)),
+    ('knn', KNeighborsClassifier(n_neighbors=5))
+]
 
-y_pred = pipeline.predict(x_test)
+trained_estimators = []
+for name, model in tqdm(estimators, desc="Training"):
+    model.fit(x_train_processed, y_train)
+    trained_estimators.append((name, model))
+
+voting_model = VotingClassifier(estimators=trained_estimators, n_jobs=-1)
+
+y_pred = voting_model.predict(x_test_processed)
 predict = pd.DataFrame({'id': [i for i in range(len(y_pred))],
                         'Churn': y_pred})
 predict.to_csv('prediction.csv', index=False, encoding='utf-8')
