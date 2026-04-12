@@ -26,7 +26,10 @@ test_data['Temp_Humidity_index'] = test_data['Humidity'] * test_data['Temperatur
 
 print(train_data.describe())
 print(train_data.columns)
+# print(train_data['Crop_Type'].unique())
+# print(train_data['Crop_Growth_Stage'].unique())
 
+# разметка столбцов (кат. / числ.)
 cat_columns = ['Soil_Type', 'Crop_Type', 'Crop_Growth_Stage',
                'Season', 'Irrigation_Type', 'Water_Source',
                'Mulching_Used', 'Region', 'Heat_Stress']
@@ -43,7 +46,9 @@ num_columns = [col for col in train_data if (col not in cat_columns) and
 #     plt.title(col)
 #     plt.show()
 
-n_splits = 5
+
+# обучение модели (кросс-валидация)
+n_splits = 5 # кол-во разбиений кросс-вал-ции
 skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
 feature_columns = num_columns + cat_columns
@@ -74,6 +79,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
         categorical_feature=cat_columns)
 
     y_pred = model.predict(X_val)
+    # метрики на фолде
     acc = accuracy_score(y_val, y_pred)
     f1 = f1_score(y_val, y_pred, average='macro')
 
@@ -85,7 +91,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
     val_scores.append(acc)
 
 
-
+# предсказание (ср. значение вероятности ансамбля моделей)
 X_test = test_data[feature_columns]
 
 test_probs = np.zeros((len(X_test), 3))
