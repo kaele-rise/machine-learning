@@ -26,6 +26,11 @@ def data_preprocessor():
     train_data['Temp_Humidity_index'] = train_data['Humidity'] * train_data['Temperature_C'] # влажность * темп-ра
     test_data['Temp_Humidity_index'] = test_data['Humidity'] * test_data['Temperature_C']
 
+    train_data['Solar_Wind_Stress'] = train_data['Wind_Speed_kmh'] * train_data['Sunlight_Hours'] # скорость ветра * солнце
+    test_data['Solar_Wind_Stress'] = test_data['Wind_Speed_kmh'] * test_data['Sunlight_Hours']
+
+
+
 
     print(train_data.describe())
     print(train_data.columns)
@@ -123,3 +128,5 @@ def model_prediction(test_data, feature_columns, models):
 
 if __name__ == "__main__":
     X, y, test_data, feature_columns, cat_columns, num_columns = data_preprocessor()
+    models = model_training(X, y, cat_columns)
+    model_prediction(test_data, feature_columns, models)
