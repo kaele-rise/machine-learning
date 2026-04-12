@@ -3,18 +3,45 @@ from sklearn.model_selection import StratifiedKFold
 import lightgbm as lgb
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
+import matplotlib.pyplot as plt
+pd.set_option('display.max_columns', None)
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 
+# аугментация данных
+train_data['Heat_Stress'] = ((train_data['Soil_Moisture'] < 22) &
+                             (train_data['Temperature_C'] > 30)) # стрессовые показатели влажности и темп-ры
+test_data['Heat_Stress'] = ((test_data['Soil_Moisture'] < 22) &
+                             (test_data['Temperature_C'] > 30))
+
+train_data['Irrigation_Efficiency'] = (train_data['Previous_Irrigation_mm'] /
+                                       train_data['Field_Area_hectare']) # полив на гектар
+test_data['Irrigation_Efficiency'] = (test_data['Previous_Irrigation_mm'] /
+                                       test_data['Field_Area_hectare'])
+
+train_data['Temp_Humidity_index'] = train_data['Humidity'] * train_data['Temperature_C'] # влажность * темп-ра
+test_data['Temp_Humidity_index'] = test_data['Humidity'] * test_data['Temperature_C']
+
+
+print(train_data.describe())
+print(train_data.columns)
+
 cat_columns = ['Soil_Type', 'Crop_Type', 'Crop_Growth_Stage',
                'Season', 'Irrigation_Type', 'Water_Source',
-               'Mulching_Used', 'Region']
+               'Mulching_Used', 'Region', 'Heat_Stress']
 train_data[cat_columns] = train_data[cat_columns].astype('category')
 test_data[cat_columns] = test_data[cat_columns].astype('category')
+
 num_columns = [col for col in train_data if (col not in cat_columns) and
                (col != 'id') and
                (col != 'Irrigation_Need')]
+
+# гистограмма каждого столбца
+# for col in num_columns:
+#     plt.hist(train_data[col], bins=30, edgecolor='black')
+#     plt.title(col)
+#     plt.show()
 
 n_splits = 5
 skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
