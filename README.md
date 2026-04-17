@@ -19,12 +19,12 @@
 
 ## 🚀 Быстрый старт
 
-```bash
-git clone https://github.com/yourusername/your-repo.git
-cd your-repo_
-```
 
-# _____________________
+```bash
+git clone https://github.com/kaele-rise/machine-learning.git
+cd machine-learning
+```
+---
 ## 🤖 Machine Learning Projects Portfolio
 
 The repository contains both educational implementations (from scratch) and Kaggle competition solutions.
