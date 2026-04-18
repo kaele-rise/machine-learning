@@ -23,13 +23,10 @@ def data_preprocessor():
     test_data['Irrigation_Efficiency'] = (test_data['Previous_Irrigation_mm'] /
                                            test_data['Field_Area_hectare'])
 
-    train_data['Temp_Humidity_index'] = train_data['Humidity'] * train_data['Temperature_C'] # влажность * темп-ра
-    test_data['Temp_Humidity_index'] = test_data['Humidity'] * test_data['Temperature_C']
 
 
 
-
-    # print(train_data.describe())
+    print(train_data.describe())
     # print(train_data.columns)
     # print(train_data['Crop_Type'].unique())
     # print(train_data['Crop_Growth_Stage'].unique())
