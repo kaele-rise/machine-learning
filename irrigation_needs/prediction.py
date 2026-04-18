@@ -26,14 +26,11 @@ def data_preprocessor():
     train_data['Temp_Humidity_index'] = train_data['Humidity'] * train_data['Temperature_C'] # влажность * темп-ра
     test_data['Temp_Humidity_index'] = test_data['Humidity'] * test_data['Temperature_C']
 
-    train_data['Solar_Wind_Stress'] = train_data['Wind_Speed_kmh'] * train_data['Sunlight_Hours'] # скорость ветра * солнце
-    test_data['Solar_Wind_Stress'] = test_data['Wind_Speed_kmh'] * test_data['Sunlight_Hours']
 
 
 
-
-    print(train_data.describe())
-    print(train_data.columns)
+    # print(train_data.describe())
+    # print(train_data.columns)
     # print(train_data['Crop_Type'].unique())
     # print(train_data['Crop_Growth_Stage'].unique())
 
@@ -77,10 +74,16 @@ def model_training(X, y, cat_columns):
         y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
         model = lgb.LGBMClassifier(
-            n_estimators=5000,
-            learning_rate=0.05,
-            objective='multiclass',
-            num_class=3,
+            n_estimators=603,
+            learning_rate=0.12662301302726814,
+            num_leaves=108,
+            max_depth=6,
+            min_child_samples=86,
+            subsample=0.6288769480543337,
+            colsample_bytree=0.7858423689667509,
+            reg_alpha=0.01746568046870873,
+            reg_lambda=4.386586815206137,
+            min_split_gain=0.8489653836808568,
             random_state=42,
             verbosity=-1
         )

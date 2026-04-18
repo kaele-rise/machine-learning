@@ -1,54 +1,77 @@
+from sklearn.model_selection import StratifiedKFold
 from prediction import data_preprocessor
-from sklearn.model_selection import RandomizedSearchCV,StratifiedKFold, train_test_split
-from sklearn.metrics import f1_score, make_scorer
+from optuna.integration import LightGBMPruningCallback
+import optuna
 import lightgbm as lgb
+from sklearn.metrics import f1_score
+import numpy as np
 
 X, y, test_data, feature_columns, cat_columns, num_columns = data_preprocessor()
 
-X_sample, _, y_sample, _ = train_test_split(
-    X, y, train_size=0.15, stratify=y, random_state=42
-)
+def hyperparameter_search(X, y, cat_columns, n_trials=50, n_splits=5):
+    def objective(trial):
+        params = {
+            'n_estimators': trial.suggest_int('n_estimators', 500, 2000),
+            'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
+            'num_leaves': trial.suggest_int('num_leaves', 20, 300),
+            'max_depth': trial.suggest_int('max_depth', 3, 15),
+            'min_child_samples': trial.suggest_int('min_child_samples', 5, 100),
+            'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+            'reg_alpha': trial.suggest_float('reg_alpha', 1e-8, 10.0, log=True),
+            'reg_lambda': trial.suggest_float('reg_lambda', 1e-8, 10.0, log=True),
+            'min_split_gain': trial.suggest_float('min_split_gain', 0.0, 1.0),
+            'objective': 'multiclass',
+            'num_class': 3,
+            'random_state': 42,
+            'verbosity': -1,
+            'n_jobs': -1
+        }
 
-# подбор гиперпараметров
-base_params = {
-    'objective': 'multiclass',
-    'num_class': 3,
-    'random_state': 42,
-    'verbosity': -1,
-    'n_jobs': -1,
-    'n_estimators': 300
-}
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+        fold_scores = []
 
-param_dist = {
-    'learning_rate': [0.01, 0.03, 0.05, 0.1],
-    'num_leaves': [20, 31, 40, 50],
-    'max_depth': [-1, 5, 10, 15],
-    'min_child_samples': [10, 20, 30, 50],
-    'subsample': [0.6, 0.7, 0.8, 0.9, 1.0],
-    'colsample_bytree': [0.6, 0.7, 0.8, 0.9, 1.0],
-    'reg_alpha': [0, 0.01, 0.1, 1],
-    'reg_lambda': [0, 0.01, 0.1, 1]
-}
+        for fold, (train_index, val_index) in enumerate(skf.split(X, y)):
+            X_train, X_val = X.iloc[train_index], X.iloc[val_index]
+            y_train, y_val = y.iloc[train_index], y.iloc[val_index]
 
-lgb_model = lgb.LGBMClassifier(**base_params)
-cv_inner = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
-scorer = make_scorer(f1_score, average='macro')
+            model = lgb.LGBMClassifier(**params)
+
+            model.fit(
+                X_train, y_train,
+                eval_set=[(X_val, y_val)],
+                eval_metric='multi_logloss',
+                callbacks=[
+                    lgb.early_stopping(50),
+                    lgb.log_evaluation(0),
+                ],
+                categorical_feature=cat_columns
+            )
+
+            y_pred = model.predict(X_val)
+            score = f1_score(y_pred, y_val, average='macro')
+            fold_scores.append(score)
+
+            best_loss = model.best_score_['valid_0']['multi_logloss']
+            trial.report(best_loss, step=fold)
+            if trial.should_prune():
+                raise optuna.TrialPruned()
+
+        return np.mean(fold_scores)
+
+    study = optuna.create_study(direction='maximize', study_name='lgbm_optimization')
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+
+    best_params = study.best_params
+    best_score = study.best_value
+
+    print(f"\nЛучшие гиперпараметры: {best_params}")
+    print(f"Лучшее значение f1 score: {best_score:.4f}")
+
+    return best_params
+
+best_params = hyperparameter_search(X, y, cat_columns, n_trials=50, n_splits=5)
+
+print(best_params)
 
 
-random_search = RandomizedSearchCV(
-    estimator=lgb_model,
-    param_distributions=param_dist,
-    n_iter=10,
-    scoring=scorer,
-    cv=cv_inner,
-    random_state=42,
-    verbose=1,
-    n_jobs=-1
-)
-
-random_search.fit(X_sample, y_sample, categorical_feature=cat_columns)
-
-print(f"Лучшие параметры: {random_search.best_params_}")
-print(f"Лучший F1-macro: {random_search.best_score_:.4f}")
-
-model_params = random_search.best_params_
