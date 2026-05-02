@@ -19,19 +19,20 @@ Position_Change – Position gain/loss compared to previous lap
 RaceProgress – Fraction of race completed (0 → 1)
 PitStop – Whether the driver pitted on that lap (0/1)
 '''
-class DataPreprocessor(BaseEstimator, TransformerMixin):
+
+
+
+class DataPreprocessor(BaseEstimator, TransformerMixin ):
     def __init__(self, window=5):
         self.window = window
         self.total_laps = None
 
     def fit(self, X, y=None):
         X_sorted = X.sort_values(['Race', 'Driver', 'LapNumber'])
-        self.total_laps_dict = X_sorted.groupby('Race')['LapNumber'].max().to_dict()
+        self.total_laps = X_sorted.groupby('Race')['LapNumber'].max().to_dict()
         return self
 
     def transform(self, X):
-        X = X.copy()
-
         X = self.add_LapTime_RollingAggs(X)
         X = self.add_PitStop_Count(X)
         X = self.add_PitStop_Prev(X)
@@ -42,11 +43,8 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
 
     # скользящие статистики
     def add_LapTime_RollingAggs(self, df):
-        df = df.copy()
-        window = 5
-
         df.sort_values(['Race', 'Driver', 'LapNumber'], inplace=True)
-        roll = df.groupby(['Driver', 'Race'])['LapTime (s)'].rolling(window, min_periods=1)
+        roll = df.groupby(['Driver', 'Race'])['LapTime (s)'].rolling(self.window, min_periods=1)
 
         mean = roll.mean().reset_index(level=[0,1], drop=True) # среднее
         std = roll.std().reset_index(level=[0,1], drop=True) # стан-е отклонение
@@ -63,7 +61,6 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
 
     # кол-во пит-стопов
     def add_PitStop_Count(self, df):
-        df = df.copy()
         df.sort_values(['Race', 'Driver', 'LapNumber'], inplace=True)
         df['PitStop_Count'] = df.groupby(['Driver', 'Race'])['PitStop'].cumsum()
 
@@ -71,17 +68,14 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
 
     # пит-стоп на пред-м круге
     def add_PitStop_Prev(self, df):
-        df = df.copy()
         df.sort_values(['Race', 'Driver', 'LapNumber'], inplace=True)
         df['PitStop_Prev'] = df.groupby(['Driver', 'Race'])['PitStop'].shift(1).fillna(0)
 
         return df
 
     # оставшееся кол-во кругов
-    def add_LapsRemaning(self, df):
-        df = df.copy()
-        total_laps = df.groupby('Race')['LapNumber'].max()
-        df['TotalLaps'] = df['Race'].map(total_laps)
+    def add_LapsRemaining(self, df):
+        df['TotalLaps'] = df['Race'].map(self.total_laps)
         df['LapsRemaning'] = df['TotalLaps'] - df['LapNumber']
         df.drop('TotalLaps', axis=1, inplace=True)
 
