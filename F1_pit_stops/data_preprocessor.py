@@ -36,7 +36,7 @@ class DataPreprocessor(BaseEstimator, TransformerMixin ):
         X = self.add_LapTime_RollingAggs(X)
         X = self.add_PitStop_Count(X)
         X = self.add_PitStop_Prev(X)
-        X = self.add_LapsRemaning(X)
+        X = self.add_LapsRemaining(X)
 
         return X
 
