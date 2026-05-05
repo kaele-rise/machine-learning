@@ -1,5 +1,3 @@
-from data_preprocessor import DataPreprocessor
-from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GroupKFold
 from lightgbm import LGBMClassifier
 from sklearn.metrics import roc_auc_score
@@ -50,11 +48,11 @@ if __name__ == '__main__':
 
     print(len(train['Race'].unique()))
 
-    X_train = train.drop('PitNextLap', axis=1)
+    X_train = train.drop(['id', 'PitNextLap'], axis=1)
     y_train = train['PitNextLap']
 
     cat_cols = ['Driver', 'Compound', 'Race']
-    X_train = X_train[cat_cols].astype('category')
+    X_train[cat_cols] = X_train[cat_cols].astype('category')
 
     lgbm_params = {
         'n_estimators': 500,
@@ -72,7 +70,8 @@ if __name__ == '__main__':
 
 
     X_test = test
-    X_test = X_test[cat_cols].astype('category')
+    X_test = X_test.drop(['id'], axis=1)
+    X_test[cat_cols] = X_test[cat_cols].astype('category')
 
     y_pred = model_prediction(models, X_test)
 
