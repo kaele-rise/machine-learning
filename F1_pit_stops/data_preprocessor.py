@@ -34,6 +34,7 @@ class DataPreprocessor(BaseEstimator, TransformerMixin ):
 
     def transform(self, X):
         X = self.add_LapTime_RollingAggs(X)
+        # X = self.add_TyreLife_RollingAggs(X)
         X = self.add_PitStop_Count(X)
         X = self.add_PitStop_Prev(X)
         X = self.add_LapsRemaining(X)
@@ -56,6 +57,18 @@ class DataPreprocessor(BaseEstimator, TransformerMixin ):
         df['LapTime_vs_Mean'] = df['LapTime (s)'] - mean
         # df['LapTime_RollingMin'] = min_time
         # df['LapTime_RollingMax'] = max_time
+
+        return df
+
+    def add_TyreLife_RollingAggs(self, df):
+        df.sort_values(['Race', 'Driver', 'LapNumber'], inplace=True)
+        roll = df.groupby(['Driver', 'Race'])['TyreLife'].rolling(self.window, min_periods=1)
+
+        mean = roll.mean().reset_index(level=[0,1], drop=True)
+        std = roll.std().reset_index(level=[0,1], drop=True)
+
+        df['TyreLife_RollingMean'] = mean
+        df['TyreLife_RollingStd'] = std
 
         return df
 
